@@ -1,0 +1,15 @@
+{
+  "name": "lesson_01",
+  "version": "1.0.0",
+  "description": "It's lesson 1.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "SHINING",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.4",
+    "utility": "^1.12.0"
+  }
+}
