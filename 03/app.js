@@ -1,68 +1,33 @@
 var express = require('express');
-var eventproxy = require('eventproxy');
-var cheerio = require('cheerio');
 var superagent = require('superagent');
-
-//url 模块是 node.js 标准库里面的
-var url = require('url');
+var cheerio = require('cheerio');
 
 var app = express();
-var cnodeUrl = 'https://cnodejs.org/';
 
 app.get('/', function (req, res, next) {
-	superagent.get(cnodeUrl)
+	//用 superagent 去抓取 https://cnodejs.org/ 的内容
+	superagent.get('https://cnodejs.org')
 		.end(function (err, sres) {
+			//常规错误处理
 			if (err) {
 				return next(err);
 			}
-			var topicUrls = [];
+			//sres.text 里面存储着网页的 html 内容，将它传给 cheerio.load 之后就可以得到一个实现了 jquery 接口的变量，我们习惯地将它命名为 $，剩下就是 jquery 内容了。
 			var $ = cheerio.load(sres.text);
-
-			//获取首页所有链接
-			$('#topic_list .topic_title').each(function (index, element) {
-				var $element = $(element);
-
-				//$elememt.attr('href') 本来的样子是 /topic/5ac21b412323d21
-				//我们用 url.resolve 来自动推断出完整 url ，变成https://...
-				var href = url.resolve(cnodeUrl, $element.attr('href'));
-				topicUrls.push(href);
-			});
-
-			//得到一个 eventproxy 的实例
-			var ep = new eventproxy();
-
-			//命令 ep 重复监听 topicUrls.length 次（这里是40次） `topic_html` 事件再行动
-			ep.after('topic_html', topicUrls.length, function (topics) {
-				//topics 是个数组，包含了 40 次 ep.emit('topic_html', pair) 中的那40个 pair
-
-				//开始行动
-				topics = topics.map(function (topicPair) {
-					//jquery 用法
-					var topicUrl = topicPair[0];
-					var topicHtml = topicPair[1];
-					var $ = cheerio.load(topicHtml);
-					return ({
-						title: $('.topic_full_title').text().trim(),
-						href: topicUrl,
-						comment1: $('.reply_content').eq(0).text().trim(),
-					});
-				});
-
-				console.log('final:');
-				console.log(topics);
-			});
-
-			topicUrls.forEach(function (topicUrl) {
-				superagent.get(topicUrl)
-					.end(function (err, res) {
-						console.log('fetch ' + topicUrl + 'successful');
-						ep.emit('topic_html', [topicUrl, res.text]);
-					});
-			});
-
+			/*var items = [];
+	  $('#topic_list .topic_title').each(function (idx, element){
+		var $element = $(element);
+		items.push({
+		    title: $element.attr('title'),
+		    href: $element.attr('href')
 		});
-});
+	  });*/
+
+			//res.send(items);
+			res.send(sres);
+		})
+})
 
 app.listen(3000, function () {
-	console.log('starting listening port 3000 ...');
+	console.log('app is listening 3000...');
 })
